@@ -35,7 +35,6 @@ const (
 	UserPFKeyword  = "drm"
 	DRMSTR         = "renderD"
 	ROMSTR         = "rom"
-	SNSTR          = "xmc.u."
 	DSAverFile     = "VBNV"
 	DSAtsFile      = "timestamp"
 	InstanceFile   = "instance"
@@ -43,7 +42,6 @@ const (
 	UserFile       = "user_pf"
 	VendorFile     = "vendor"
 	DeviceFile     = "device"
-	SNFile         = "serial_num"
 	XilinxVendorID = "0x10ee"
 	ADVANTECH_ID   = "0x13fe"
 	AWS_ID         = "0x1d0f"
@@ -63,7 +61,6 @@ type Device struct {
 	DBDF      string // this is for user pf
 	deviceID  string //devid of the user pf
 	Healthy   string
-	SN        string
 	Nodes     *Pairs
 }
 
@@ -194,11 +191,6 @@ func GetDevices() ([]Device, error) {
 				fmt.Println(romFolder, err)
 				count += 1
 			}
-			SNFolder, err := GetFileNameFromPrefix(path.Join(SysfsDevices, pciID), SNSTR)
-			// Need to confirm if this will be reset as romfolder
-			if err != nil {
-                                return nil, err
-                        }
 			// get dsa version
 			fname = path.Join(SysfsDevices, pciID, romFolder, DSAverFile)
 			content, err := GetFileContent(fname)
@@ -220,13 +212,6 @@ func GetDevices() ([]Device, error) {
 				return nil, err
 			}
 			devid := content
-			// get Serial Number
-			fname = path.Join(SysfsDevices, pciID, SNFolder, SNFile)
-			content, err = GetFileContent(fname)
-                        if err != nil {
-                                return nil, err
-                        }
-			SN := content
 			// get user PF node
 			userpf, err := GetFileNameFromPrefix(path.Join(SysfsDevices, pciID, UserPFKeyword), DRMSTR)
 			if err != nil {
@@ -260,7 +245,6 @@ func GetDevices() ([]Device, error) {
 				DBDF:      userDBDF,
 				deviceID:  devid,
 				Healthy:   healthy,
-				SN:        SN,
 				Nodes:     pairMap[DBD],
 			})
 		} else if IsMgmtPf(pciID) { //mgmt pf
@@ -278,22 +262,13 @@ func GetDevices() ([]Device, error) {
 
 /*
 func main() {
-        devices, err := GetDevices()
+	devices, err := GetDevices()
 	if err != nil {
-                fmt.Printf("%s !!!\n", err)
-                return
-        }
-
-        //SNFolder, err := GetFileNameFromPrefix(path.Join(SysfsDevices, "0000:e3:00.1"), SNSTR)
-	//fname := path.Join(SysfsDevices, "0000:e3:00.1", SNFolder, SNFile)
-	//content, err := GetFileContent(fname)
-	//SN := content
-	//fmt.Printf("SN: %v \n", SN)
-        for _, device := range devices {
-                fmt.Printf("Device: %v \n", device)
-                fmt.Printf("Timestamp: %v \n",device.timestamp)
-                fmt.Printf("SN: %v  \n", device.SN)
-                fmt.Printf("ID: %s  \n\n", device.deviceID)
-        }
+		fmt.Printf("%s !!!\n", err)
+		return
+	}
+	for _, device := range devices {
+		fmt.Printf("%v", device)
+	}
 }
 */
