@@ -82,6 +82,7 @@ func NewFPGADevicePlugin() *FPGADevicePlugin {
 				}
 			}
 			//log.Debugf("newly reported FPGA device list: %v", devMap)
+			//log.Println("######Newly reported FPGA device list: %v", devMap)
 			updateChan <- devMap
 			time.Sleep(5 * time.Second)
 		}
@@ -124,6 +125,8 @@ func (m *FPGADevicePlugin) checkDeviceUpdate(n map[string]map[string]Device) {
 				os.Exit(1)
 			}
 			m.servers[aDevType].update <- aDevices
+			log.Println("############checkDeviceUpdate-devtype: %v ##############", aDevType)
+			log.Println("############checkDeviceUpdate-devices: %v ##############", aDevices)
 		}(aDevType, aDevices, resourceNamePrefix+"-"+aDevType)
 	}
 
@@ -267,11 +270,39 @@ func (m *FPGADevicePluginServer) Register(kubeletEndpoint, resourceName string) 
 	return nil
 }
 
+func IsContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *FPGADevicePluginServer) sendDevices(s pluginapi.DevicePlugin_ListAndWatchServer) error {
 	resp := new(pluginapi.ListAndWatchResponse)
-	for _, device := range m.devices {
-		resp.Devices = append(resp.Devices, &pluginapi.Device{device.DBDF, device.Healthy})
+
+	test_range := m.devices
+	//log.Printf("************check test_range %v", test_range)
+	//DBDF_key := make([]string, 0, len(m.devices))
+	//for k := range m.devices {
+	//	DBDF_key = append(DBDF_key, k)
+	//}
+	//log.Printf("************check DBDF_key %v", DBDF_key)
+	SerialNums := []string{}
+	for _, device := range test_range {
+		if IsContain(SerialNums, device.SN) {
+			log.Printf("******######already exists")
+		} else {
+			if device.SN == "" {
+				log.Printf("device SN is empty")
+			} else {
+				SerialNums = append(SerialNums, device.SN)
+				resp.Devices = append(resp.Devices, &pluginapi.Device{device.DBDF, device.Healthy})
+			}
+		}
 	}
+	log.Printf("*******#######check SeialNums %v", SerialNums)
 	log.Printf("Sending %d device(s) %v to kubelet", len(resp.Devices), resp.Devices)
 	if err := s.Send(resp); err != nil {
 		m.Stop()
@@ -296,12 +327,38 @@ func (m *FPGADevicePluginServer) ListAndWatch(e *pluginapi.Empty, s pluginapi.De
 // Allocate which return list of devices.
 func (m *FPGADevicePluginServer) Allocate(ctx context.Context, req *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	log.Debugf("In Allocate()")
+	//log.Println("*******Check ctx: %v:", ctx)
 	response := new(pluginapi.AllocateResponse)
-
+	//log.Println("*******Check req: %v", req)
+	//log.Println("*******Check resp: %v", response)
 	for _, creq := range req.ContainerRequests {
 		log.Debugf("Request IDs: %v", creq.DevicesIDs)
+
 		cres := new(pluginapi.ContainerAllocateResponse)
-		for _, id := range creq.DevicesIDs {
+
+		// **************new code - check same serial number devices
+		deviceIDs_arry := creq.DevicesIDs
+		for id2 := range deviceIDs_arry {
+			log.Println("==========Check SN type:%v", m.devices[deviceIDs_arry[id2]].SN)
+
+			for _, device := range m.devices {
+				log.Println("================get into device loop")
+				log.Println("================check device SN: v%", device.SN)
+				log.Println("================check target SN: v%", m.devices[deviceIDs_arry[id2]].SN)
+				log.Println("================check target DBDF: v%", m.devices[deviceIDs_arry[id2]].DBDF)
+				//log.Println("================check judgement: v%", IsContain(deviceIDs_arry, m.devices[deviceIDs_arry[id2]].DBDF)
+
+				if device.SN == m.devices[deviceIDs_arry[id2]].SN {
+					//IsContain(deviceIDs_arry, m.devices[deviceIDs_arry[id2]].DBDF)
+					log.Println("===================Add SN devices")
+					deviceIDs_arry = append(deviceIDs_arry, device.DBDF)
+				}
+			}
+		}
+		log.Println("================Check final allocate: %v", deviceIDs_arry)
+
+		// ***************new code
+		for _, id := range deviceIDs_arry {
 			log.Printf("Receiving request %s", id)
 			dev, ok := m.devices[id]
 			if !ok {

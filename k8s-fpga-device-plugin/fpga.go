@@ -197,8 +197,8 @@ func GetDevices() ([]Device, error) {
 			SNFolder, err := GetFileNameFromPrefix(path.Join(SysfsDevices, pciID), SNSTR)
 			// Need to confirm if this will be reset as romfolder
 			if err != nil {
-                                return nil, err
-                        }
+				return nil, err
+			}
 			// get dsa version
 			fname = path.Join(SysfsDevices, pciID, romFolder, DSAverFile)
 			content, err := GetFileContent(fname)
@@ -223,9 +223,9 @@ func GetDevices() ([]Device, error) {
 			// get Serial Number
 			fname = path.Join(SysfsDevices, pciID, SNFolder, SNFile)
 			content, err = GetFileContent(fname)
-                        if err != nil {
-                                return nil, err
-                        }
+			if err != nil {
+				return nil, err
+			}
 			SN := content
 			// get user PF node
 			userpf, err := GetFileNameFromPrefix(path.Join(SysfsDevices, pciID, UserPFKeyword), DRMSTR)
