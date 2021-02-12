@@ -82,7 +82,6 @@ func NewFPGADevicePlugin() *FPGADevicePlugin {
 				}
 			}
 			//log.Debugf("newly reported FPGA device list: %v", devMap)
-			//log.Println("######Newly reported FPGA device list: %v", devMap)
 			updateChan <- devMap
 			time.Sleep(5 * time.Second)
 		}
@@ -125,8 +124,8 @@ func (m *FPGADevicePlugin) checkDeviceUpdate(n map[string]map[string]Device) {
 				os.Exit(1)
 			}
 			m.servers[aDevType].update <- aDevices
-			log.Println("############checkDeviceUpdate-devtype: %v ##############", aDevType)
-			log.Println("############checkDeviceUpdate-devices: %v ##############", aDevices)
+			//log.Println("checkDeviceUpdate-devtype: %v", aDevType)
+			//log.Println("checkDeviceUpdate-devices: %v", aDevices)
 		}(aDevType, aDevices, resourceNamePrefix+"-"+aDevType)
 	}
 
@@ -292,17 +291,18 @@ func (m *FPGADevicePluginServer) sendDevices(s pluginapi.DevicePlugin_ListAndWat
 	SerialNums := []string{}
 	for _, device := range test_range {
 		if IsContain(SerialNums, device.SN) {
-			log.Printf("******######already exists")
+			log.Printf("Same serial number device already exists")
 		} else {
 			if device.SN == "" {
-				log.Printf("device SN is empty")
+				log.Debugf("Error, Device %v has empty Serial number", device.DBDF)
+				log.Printf("Error, Device %v has empty Serial number", device.DBDF)
 			} else {
 				SerialNums = append(SerialNums, device.SN)
 				resp.Devices = append(resp.Devices, &pluginapi.Device{device.DBDF, device.Healthy})
 			}
 		}
 	}
-	log.Printf("*******#######check SeialNums %v", SerialNums)
+	//log.Printf("Check SeialNums arry: %v", SerialNums)
 	log.Printf("Sending %d device(s) %v to kubelet", len(resp.Devices), resp.Devices)
 	if err := s.Send(resp); err != nil {
 		m.Stop()
