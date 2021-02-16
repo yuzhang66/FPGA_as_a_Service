@@ -345,11 +345,11 @@ func (m *FPGADevicePluginServer) Allocate(ctx context.Context, req *pluginapi.Al
 				log.Println("================get into device loop")
 				log.Println("================check device SN: v%", device.SN)
 				log.Println("================check target SN: v%", m.devices[deviceIDs_arry[id2]].SN)
+				log.Println("================check target DBDF: v%", m.devices[device.DBDF])
 				log.Println("================check target DBDF: v%", m.devices[deviceIDs_arry[id2]].DBDF)
 				//log.Println("================check judgement: v%", IsContain(deviceIDs_arry, m.devices[deviceIDs_arry[id2]].DBDF)
 
-				if device.SN == m.devices[deviceIDs_arry[id2]].SN {
-					//IsContain(deviceIDs_arry, m.devices[deviceIDs_arry[id2]].DBDF)
+				if device.SN == m.devices[deviceIDs_arry[id2]].SN && IsContain(deviceIDs_arry, device.DBDF) == false {
 					log.Println("===================Add SN devices")
 					deviceIDs_arry = append(deviceIDs_arry, device.DBDF)
 				}
