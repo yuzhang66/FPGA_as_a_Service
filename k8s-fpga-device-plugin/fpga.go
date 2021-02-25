@@ -186,12 +186,15 @@ func GetDevices() ([]Device, error) {
 				return nil, err
 			}
 			for romFolder == "" {
-				if count >= 3 {
+				if count >= 35 {
 					break
 				}
-				time.Sleep(3 * time.Second)
-				romFolder, err := GetFileNameFromPrefix(path.Join(SysfsDevices, pciID), ROMSTR)
-				fmt.Println(romFolder, err)
+				time.Sleep(5 * time.Second)
+				romFolder, err = GetFileNameFromPrefix(path.Join(SysfsDevices, pciID), ROMSTR)
+				if romFolder != "" {
+					break
+				}
+				fmt.Println(pciID, romFolder, err)
 				count += 1
 			}
 			SNFolder, err := GetFileNameFromPrefix(path.Join(SysfsDevices, pciID), SNSTR)
